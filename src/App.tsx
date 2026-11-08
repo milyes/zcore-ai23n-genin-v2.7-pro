@@ -13,9 +13,11 @@ import { TacticalInferenceResult } from './types/zcore';
 import { SCENARIO_PRESETS } from './data/scenarios';
 import { executeTacticalInference } from './utils/cryptoAudit';
 import { generateStandaloneHtml } from './utils/exportHtml';
-import { CheckCircle2, Play, Download, FileCode } from 'lucide-react';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { CheckCircle2 } from 'lucide-react';
 
-export default function App() {
+function AppContent() {
+  const { language, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<AppTab>('inference');
   const [faradayActive, setFaradayActive] = useState<boolean>(true);
   const [boostActive, setBoostActive] = useState<boolean>(false);
@@ -28,18 +30,18 @@ export default function App() {
   // Initialize with the first scenario inference on load
   useEffect(() => {
     async function initBaseline() {
-      const initial = await executeTacticalInference(SCENARIO_PRESETS[0].vitals, 'NINJA');
+      const initial = await executeTacticalInference(SCENARIO_PRESETS[0].vitals, 'NINJA', false, language);
       setLatestResult(initial);
       setAuditHistory([initial]);
     }
     initBaseline();
-  }, []);
+  }, [language]);
 
   const showNotification = (msg: string) => {
     setStatusNotification(msg);
     setTimeout(() => {
       setStatusNotification(null);
-    }, 4000);
+    }, 4500);
   };
 
   const handleInferenceCompleted = (result: TacticalInferenceResult) => {
@@ -61,7 +63,11 @@ export default function App() {
       };
       setLatestResult(updated);
       setAuditHistory((prev) => [updated, ...prev]);
-      showNotification('BOOST 45W ENGAGÉ: Synthèse exascale Gemini 3.8 Flash intégrée');
+      showNotification(
+        language === 'FR'
+          ? 'BOOST 45W ENGAGÉ : Synthèse exascale Gemini 3.8 Flash intégrée'
+          : '45W BOOST ENGAGED: Gemini 3.8 Flash exascale synthesis integrated'
+      );
     }
   };
 
@@ -73,16 +79,24 @@ export default function App() {
   const handleEnclaveWiped = () => {
     setAuditHistory([]);
     setLatestResult(null);
-    showNotification('Z-GHOST: Enclave RAM purgée (0 traces résiduelles)');
+    showNotification(
+      language === 'FR'
+        ? 'Z-GHOST : Enclave RAM purgée (0 traces résiduelles)'
+        : 'Z-GHOST: RAM enclave zeroized (0 residual traces)'
+    );
   };
 
   // 1. Action: LANCER AI23N
   const handleLancerAI23N = async () => {
     setActiveTab('inference');
-    const res = await executeTacticalInference(SCENARIO_PRESETS[0].vitals, 'NINJA');
+    const res = await executeTacticalInference(SCENARIO_PRESETS[0].vitals, 'NINJA', false, language);
     setLatestResult(res);
     setAuditHistory((prev) => [res, ...prev]);
-    showNotification(`AI23N LANCÉ: Inférence souveraine exécutée en ${res.latencySeconds}s (22 modèles consensurés, SHA-256 scellé)`);
+    showNotification(
+      language === 'FR'
+        ? `AI23N LANCÉ : Inférence souveraine exécutée en ${res.latencySeconds}s (22 modèles consensurés, SHA-256 scellé)`
+        : `AI23N LAUNCHED: Sovereign inference executed in ${res.latencySeconds}s (22 models consensused, SHA-256 sealed)`
+    );
   };
 
   // 2. Action: EXPORT BIN (580B)
@@ -94,7 +108,11 @@ export default function App() {
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      showNotification(usbPlugged ? 'LEURRE USB EXPORTÉ: zcore-decoy-580.bin (580B)' : 'BIN EXPORTÉ: zcore-ai23n-genin-v2.7-pro.bin (580B statique)');
+      showNotification(
+        usbPlugged
+          ? (language === 'FR' ? 'LEURRE USB EXPORTÉ : zcore-decoy-580.bin (580B)' : 'USB DECOY EXPORTED: zcore-decoy-580.bin (580B)')
+          : (language === 'FR' ? 'BIN EXPORTÉ : zcore-ai23n-genin-v2.7-pro.bin (580B statique)' : 'BIN EXPORTED: zcore-ai23n-genin-v2.7-pro.bin (580B static)')
+      );
     } catch {
       // Client fallback blob (580 bytes)
       const buffer = new Uint8Array(580);
@@ -119,17 +137,21 @@ export default function App() {
   // 3. Action: BUILD HTML (Application autonome 100% offline)
   const handleBuildHtml = () => {
     try {
-      const htmlContent = generateStandaloneHtml();
+      const htmlContent = generateStandaloneHtml(language);
       const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
-      anchor.download = 'zcore-ai23n-genin-v2.7-pro-standalone.html';
+      anchor.download = `zcore-ai23n-genin-v2.7-pro-${language.toLowerCase()}.html`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(url);
-      showNotification('BUILD HTML PRÊT: zcore-ai23n-genin-v2.7-pro-standalone.html téléchargé (100% offline air-gapped)');
+      showNotification(
+        language === 'FR'
+          ? 'BUILD HTML FR PRÊT : Application autonome 100% offline téléchargée'
+          : 'BUILD HTML EN READY: 100% standalone offline application downloaded'
+      );
     } catch (err) {
       console.error(err);
       showNotification('Erreur lors de la génération du bundle HTML');
@@ -138,7 +160,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* Top Bar (Strict 3-zone contract with direct LANCER AI23N, EXPORT BIN, and BUILD HTML) */}
+      {/* Top Bar (Strict 3-zone contract with FR | EN switcher, LANCER AI23N, EXPORT BIN, and BUILD HTML) */}
       <TopBar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -223,19 +245,19 @@ export default function App() {
       <footer className="border-t border-slate-900 bg-slate-950 px-6 py-3.5 mt-auto text-xs font-mono text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="text-slate-400 font-semibold">Z-CORE AI23N GENIN v2.7 PRO</span>
+            <span className="text-slate-400 font-semibold">{t.footer.name}</span>
             <span aria-hidden="true">·</span>
-            <span>Static Binary 580B</span>
+            <span>{t.footer.size}</span>
             <span aria-hidden="true">·</span>
-            <span>22 Models + INT2 Learn</span>
+            <span>{t.footer.models}</span>
             <span aria-hidden="true">·</span>
-            <span className="text-cyan-400">127.0.0.1:8443</span>
+            <span className="text-cyan-400">{t.footer.ip}</span>
           </div>
 
           <div className="flex items-center gap-3 text-slate-400">
-            <span>Modules: Z-GHOST · Z-SYNC · Z-LEARN</span>
+            <span>{t.footer.modules}</span>
             <span aria-hidden="true">·</span>
-            <span>Power: {boostActive ? '45W Peak' : '&lt;30W Sovereign'}</span>
+            <span>{boostActive ? t.footer.powerBoost : t.footer.powerSovereign}</span>
           </div>
         </div>
       </footer>
@@ -251,5 +273,13 @@ export default function App() {
         onDeactivateBoost={handleDeactivateBoost}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }

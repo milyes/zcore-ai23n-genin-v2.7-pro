@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Cpu, Zap, Activity, RefreshCw, CheckCircle2, Layers, TrendingDown, ShieldCheck } from 'lucide-react';
 import { Z_CORE_MODELS } from '../data/models';
 import { FederatedTrainingSession } from '../types/zcore';
+import { useLanguage } from '../context/LanguageContext';
 
 export const ZLearnFederated: React.FC = () => {
+  const { language, t } = useLanguage();
   const [selectedModelId, setSelectedModelId] = useState<string>('m2'); // Z-HEMO-SHOCK
   const [cohortDomain, setCohortDomain] = useState<string>('Austere Arctic / Hypothermia Extreme Trauma');
   const [isTraining, setIsTraining] = useState<boolean>(false);
@@ -53,18 +55,18 @@ export const ZLearnFederated: React.FC = () => {
       <div className="border border-slate-800 bg-slate-900/60 p-5 rounded-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-base font-bold text-white">Z-LEARN: ON-DEVICE FEDERATED LEARNING</span>
+            <span className="text-base font-bold text-white">{t.learn.title}</span>
             <span className="text-xs font-mono text-cyan-400 bg-cyan-950/60 border border-cyan-800 px-2 py-0.5 rounded">
-              NINJA LOCAL TRAINING · +0 BYTES CLOUD · INT2 QUANTIZATION
+              {t.learn.badge}
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1 max-w-xl">
-            Sovereign edge fine-tuning. Adapts neural model weights locally in volatile RAM based on observed patient survival outcomes, keeping weights strictly within the 580-byte core via 2-bit quantization.
+            {t.learn.desc}
           </p>
         </div>
 
         <div className="text-xs font-mono text-emerald-400 border border-emerald-900/60 bg-emerald-950/30 px-3 py-1.5 rounded">
-          CLOUD EGRESS: 0.00 BYTES
+          {t.learn.egress}
         </div>
       </div>
 

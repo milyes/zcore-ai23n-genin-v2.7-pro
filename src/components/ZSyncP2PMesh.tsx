@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Radio, Bluetooth, ShieldCheck, Share2, RefreshCw, CheckCircle2, Lock, Send, Users } from 'lucide-react';
 import { PeerMeshNode, TacticalInferenceResult } from '../types/zcore';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ZSyncP2PMeshProps {
   latestResult: TacticalInferenceResult | null;
 }
 
 export const ZSyncP2PMesh: React.FC<ZSyncP2PMeshProps> = ({ latestResult }) => {
+  const { language, t } = useLanguage();
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [peers, setPeers] = useState<PeerMeshNode[]>([
     {
@@ -81,13 +83,13 @@ export const ZSyncP2PMesh: React.FC<ZSyncP2PMeshProps> = ({ latestResult }) => {
       <div className="border border-slate-800 bg-slate-900/60 p-5 rounded-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-base font-bold text-white">Z-SYNC-P2P: SOVEREIGN MESH NETWORK</span>
+            <span className="text-base font-bold text-white">{t.sync.title}</span>
             <span className="text-xs font-mono text-cyan-400 bg-cyan-950/60 border border-cyan-800 px-2 py-0.5 rounded">
-              BLE 5.4 · 0 CLOUD · 0 INTERNET · SHA-256 HANDSHAKE
+              {t.sync.badge}
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1 max-w-xl">
-            Decentralized peer-to-peer telemetry synchronization. Communicates directly between air-gapped Z-CORE devices using encrypted Bluetooth Low Energy beacons with zero cellular or internet routing.
+            {t.sync.desc}
           </p>
         </div>
 
@@ -97,7 +99,7 @@ export const ZSyncP2PMesh: React.FC<ZSyncP2PMeshProps> = ({ latestResult }) => {
           className="px-4 py-2 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-semibold text-xs font-mono rounded transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
         >
           {isScanning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Bluetooth className="w-4 h-4" />}
-          <span>{isScanning ? 'SCANNING PEERS...' : 'DISCOVER LOCAL PEERS'}</span>
+          <span>{isScanning ? t.sync.scanning : t.sync.scanBtn}</span>
         </button>
       </div>
 
@@ -108,9 +110,9 @@ export const ZSyncP2PMesh: React.FC<ZSyncP2PMeshProps> = ({ latestResult }) => {
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-mono uppercase tracking-wider text-slate-300 flex items-center gap-2">
               <Users className="w-4 h-4 text-cyan-400" />
-              <span>Sovereign Z-CORE Nodes in Proximity</span>
+              <span>{t.sync.proximityTitle}</span>
             </h3>
-            <span className="text-xs font-mono text-slate-500">Only Z-CORE to Z-CORE</span>
+            <span className="text-xs font-mono text-slate-500">{t.sync.onlyZcore}</span>
           </div>
 
           <div className="space-y-3">

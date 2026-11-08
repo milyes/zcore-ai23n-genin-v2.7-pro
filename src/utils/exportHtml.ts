@@ -1,13 +1,15 @@
 // Generates a pristine, 100% self-contained, air-gapped single-file HTML application
-// for Z-CORE AI23N GENIN v2.7 PRO that runs offline without any server or dependencies.
+// for Z-CORE AI23N GENIN v2.7 PRO in French or English.
 
-export function generateStandaloneHtml(): string {
+export function generateStandaloneHtml(lang: 'FR' | 'EN' = 'FR'): string {
+  const isFr = lang === 'FR';
+
   return `<!doctype html>
-<html lang="en" class="dark">
+<html lang="${isFr ? 'fr' : 'en'}" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Z-CORE AI23N GENIN v2.7 PRO — Standalone Sovereign Tactical Core</title>
+  <title>Z-CORE AI23N GENIN v2.7 PRO — ${isFr ? 'Noyau Tactique Autonome Souverain' : 'Standalone Sovereign Tactical Core'}</title>
   <style>
     :root {
       --bg: #030712;
@@ -17,6 +19,7 @@ export function generateStandaloneHtml(): string {
       --cyan-dim: rgba(34, 211, 238, 0.15);
       --amber: #fbbf24;
       --rose: #fb7185;
+      --emerald: #34d399;
       --text: #f8fafc;
       --muted: #64748b;
     }
@@ -51,7 +54,7 @@ export function generateStandaloneHtml(): string {
       background: var(--cyan-dim);
     }
     .btn {
-      background: var(--cyan);
+      background: var(--emerald);
       color: #000;
       border: none;
       padding: 8px 16px;
@@ -113,72 +116,80 @@ export function generateStandaloneHtml(): string {
     <div>
       <div class="brand">Z-CORE AI23N GENIN v2.7 PRO</div>
       <div style="font-size: 11px; color: var(--muted); font-family: monospace; margin-top: 2px;">
-        SOVEREIGN POCKET EXASCALE AI · 580-BYTE STATIC BINARY · AIR-GAPPED 127.0.0.1:8443
+        ${isFr ? 'IA EXASCALE DE POCHE SOUVERAINE · BINAIRE STATIQUE 580 OCTETS · AIR-GAP 127.0.0.1:8443' : 'SOVEREIGN POCKET EXASCALE AI · 580-BYTE STATIC BINARY · AIR-GAPPED 127.0.0.1:8443'}
       </div>
     </div>
     <div style="display: flex; gap: 8px;">
-      <button class="btn" onclick="lancerAI23N()">LANCER AI23N (0.03s)</button>
-      <button class="btn btn-secondary" onclick="exportBin()">EXPORT .BIN (580B)</button>
+      <button class="btn" onclick="lancerAI23N()">${isFr ? 'LANCER AI23N (0.03s)' : 'LAUNCH AI23N (0.03s)'}</button>
+      <button class="btn btn-secondary" onclick="exportBin()">${isFr ? 'EXPORTER .BIN (580B)' : 'EXPORT .BIN (580B)'}</button>
     </div>
   </header>
 
   <div class="grid">
     <div class="card">
-      <div class="card-title">Triage Classification</div>
-      <div class="value" id="triageText" style="color: var(--rose);">IMMEDIATE (RED)</div>
-      <div style="font-size: 11px; color: var(--muted); margin-top: 4px;" id="triageSub">TCCC Category 1 · Severe Hemorrhage</div>
+      <div class="card-title">${isFr ? 'Classification Triage' : 'Triage Classification'}</div>
+      <div class="value" id="triageText" style="color: var(--rose);">${isFr ? 'IMMÉDIAT (ROUGE)' : 'IMMEDIATE (RED)'}</div>
+      <div style="font-size: 11px; color: var(--muted); margin-top: 4px;" id="triageSub">
+        ${isFr ? 'Catégorie 1 TCCC · Choc Hémorragique Sévère' : 'TCCC Category 1 · Severe Hemorrhage'}
+      </div>
     </div>
     <div class="card">
-      <div class="card-title">Shock Index & MAP</div>
+      <div class="card-title">${isFr ? 'Index de Choc & PAM' : 'Shock Index & MAP'}</div>
       <div class="value" id="siText">1.77 <span style="font-size: 13px; color: var(--muted);">MAP 54</span></div>
-      <div style="font-size: 11px; color: var(--rose); margin-top: 4px;">Massive Transfusion Protocol (MTP) Triggered</div>
+      <div style="font-size: 11px; color: var(--rose); margin-top: 4px;">
+        ${isFr ? 'Protocole Transfusion Massive (MTP) Déclenché' : 'Massive Transfusion Protocol (MTP) Triggered'}
+      </div>
     </div>
     <div class="card">
-      <div class="card-title">Inference Engine Telemetry</div>
+      <div class="card-title">${isFr ? 'Télémétrie du Moteur' : 'Inference Engine Telemetry'}</div>
       <div class="value" id="latencyText" style="color: var(--cyan);">0.029s</div>
-      <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">22 Models Consensused @ 5400 inf/s &lt;30W</div>
+      <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">
+        ${isFr ? '22 Modèles Consensurés @ 5400 inf/s <30W' : '22 Models Consensused @ 5400 inf/s <30W'}
+      </div>
     </div>
     <div class="card">
-      <div class="card-title">Z-GHOST Anti-Forensic Status</div>
-      <div class="value" id="ghostText" style="color: var(--amber);">ARMED 30s</div>
-      <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">Kill-Switch: PIN 9999 · Decoy: Ready</div>
+      <div class="card-title">${isFr ? 'Statut Z-GHOST Anti-Forensique' : 'Z-GHOST Anti-Forensic Status'}</div>
+      <div class="value" id="ghostText" style="color: var(--amber);">${isFr ? 'ARMÉ 30s' : 'ARMED 30s'}</div>
+      <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">
+        ${isFr ? 'Coupe-circuit : PIN 9999 · Leurre USB : Prêt' : 'Kill-Switch: PIN 9999 · Decoy: Ready'}
+      </div>
     </div>
   </div>
 
   <div class="card" style="margin-bottom: 24px;">
-    <div class="card-title">Prioritized Clinical Interventions (TCCC / ATLS)</div>
+    <div class="card-title">${isFr ? 'Directives Thérapeutiques Priorisées (TCCC / ATLS)' : 'Prioritized Clinical Interventions (TCCC / ATLS)'}</div>
     <table>
       <thead>
         <tr>
-          <th>Priority</th>
-          <th>Procedure / Action</th>
-          <th>Dosage</th>
+          <th>${isFr ? 'Rang' : 'Priority'}</th>
+          <th>${isFr ? 'Procédure / Action' : 'Procedure / Action'}</th>
+          <th>${isFr ? 'Posologie' : 'Dosage'}</th>
           <th>Standard</th>
         </tr>
       </thead>
       <tbody id="interventionRows">
         <tr>
           <td style="color: var(--cyan); font-weight: bold;">#01</td>
-          <td>Tighten Junctional Tourniquet / Hemostatic Gauze Packing</td>
-          <td>Arterial Occlusion Check</td>
+          <td>${isFr ? 'Serrer Garrot Jonctionnel / Méchage Hémostatique' : 'Tighten Junctional Tourniquet / Hemostatic Gauze Packing'}</td>
+          <td>${isFr ? 'Contrôle Occlusion Artérielle' : 'Arterial Occlusion Check'}</td>
           <td>TCCC</td>
         </tr>
         <tr>
           <td style="color: var(--cyan); font-weight: bold;">#02</td>
-          <td>Tranexamic Acid (TXA) IV/IO Push over 10 min</td>
-          <td>2.0 g IV/IO (Golden Hour &lt;3h)</td>
+          <td>${isFr ? 'Acide Tranexamique (TXA) IV/IO Bolus Lente en 10 min' : 'Tranexamic Acid (TXA) IV/IO Push over 10 min'}</td>
+          <td>${isFr ? '2.0 g IV/IO (Fenêtre <3h)' : '2.0 g IV/IO (Golden Hour <3h)'}</td>
           <td>TCCC</td>
         </tr>
         <tr>
           <td style="color: var(--cyan); font-weight: bold;">#03</td>
-          <td>Initiate Low-Titer O Whole Blood (LTOWB) 1:1:1 Ratio</td>
-          <td>1 unit warmed inline</td>
+          <td>${isFr ? 'Transfusion Sang Total Faible Titre (LTOWB) Ratio 1:1:1' : 'Initiate Low-Titer O Whole Blood (LTOWB) 1:1:1 Ratio'}</td>
+          <td>${isFr ? '1 poche réchauffée en ligne' : '1 unit warmed inline'}</td>
           <td>TCCC</td>
         </tr>
         <tr>
           <td style="color: var(--cyan); font-weight: bold;">#04</td>
-          <td>Needle Thoracostomy (5th Intercostal Mid-Axillary)</td>
-          <td>10-gauge / 3.25 in</td>
+          <td>${isFr ? 'Thoracostomie à l’Aiguille (5e Espace Intercostal Axillaire)' : 'Needle Thoracostomy (5th Intercostal Mid-Axillary)'}</td>
+          <td>10G / 8cm</td>
           <td>ATLS</td>
         </tr>
       </tbody>
@@ -186,12 +197,12 @@ export function generateStandaloneHtml(): string {
   </div>
 
   <div class="card" style="margin-bottom: 24px;">
-    <div class="card-title">SHA-256 Audit Digest (Volatile Memory Enclave)</div>
+    <div class="card-title">${isFr ? 'Empreinte SHA-256 (Mémoire Volatile Sécurisée)' : 'SHA-256 Audit Digest (Volatile Memory Enclave)'}</div>
     <div class="hash-box" id="hashText">77f855c0621174e4396b14c33a11fbe5fc9689bae997ecf33a4ed0847e6a6ca3</div>
   </div>
 
   <footer>
-    <div>AIR-GAPPED STANDALONE BUILD · 100% OFFLINE RESIDENT</div>
+    <div>${isFr ? 'BUILD AUTONOME AIR-GAP · RÉSIDENT 100% HORS-LIGNE' : 'AIR-GAPPED STANDALONE BUILD · 100% OFFLINE RESIDENT'}</div>
     <div>Z-CORE AI23N GENIN v2.7 PRO · MONTREAL 2026</div>
   </footer>
 
@@ -202,7 +213,7 @@ export function generateStandaloneHtml(): string {
       const randHash = Array.from(crypto.getRandomValues(new Uint8Array(32)))
         .map(b => b.toString(16).padStart(2, '0')).join('');
       document.getElementById('hashText').innerText = randHash;
-      alert('AI23N LANCÉ: Inférence souveraine exécutée en ' + lat + 's (22 modèles synchronisés, SHA-256 scellé).');
+      alert('${isFr ? 'AI23N LANCÉ : Inférence souveraine exécutée en ' : 'AI23N LAUNCHED: Sovereign inference executed in '}' + lat + 's (22 modèles, SHA-256 scellé).');
     }
 
     function exportBin() {

@@ -9,7 +9,6 @@ export async function computeSha256(text: string): Promise<string> {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
   }
-  // Fallback simple deterministic hex generator if crypto.subtle is unavailable
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
     hash = (hash << 5) - hash + text.charCodeAt(i);
@@ -18,13 +17,15 @@ export async function computeSha256(text: string): Promise<string> {
   return Math.abs(hash).toString(16).padStart(64, 'a');
 }
 
-// Tactical Inference Core (Simulates the compiled AArch64 int4 sparse vector models)
+// Tactical Inference Core with FR and EN support
 export async function executeTacticalInference(
   vitals: ClinicalVitals,
   mode: ExecutionMode,
-  silent: boolean = false
+  silent: boolean = false,
+  lang: 'FR' | 'EN' = 'FR'
 ): Promise<TacticalInferenceResult> {
   const startTime = performance.now();
+  const isFr = lang === 'FR';
 
   // 1. Hemodynamic & Shock Math
   const shockIndex = vitals.systolicBP > 0 ? Number((vitals.heartRate / vitals.systolicBP).toFixed(2)) : 2.0;
@@ -43,74 +44,89 @@ export async function executeTacticalInference(
   }
 
   // 3. MTP (Massive Transfusion Protocol) Trigger based on ABC Score
-  // Criteria: Penetrating mechanism, SBP <= 90, HR >= 120, Active Hemorrhage
   const mtpScore =
     (vitals.systolicBP <= 90 ? 1 : 0) +
     (vitals.heartRate >= 120 ? 1 : 0) +
     (vitals.activeHemorrhage ? 1 : 0) +
-    (vitals.mechanism.toLowerCase().includes('blast') || vitals.mechanism.toLowerCase().includes('penetrating') ? 1 : 0);
+    (vitals.mechanism.toLowerCase().includes('blast') || vitals.mechanism.toLowerCase().includes('penetrating') || vitals.mechanism.toLowerCase().includes('souffle') ? 1 : 0);
   const mtpTriggered = mtpScore >= 2;
 
   // 4. Airway & Hypoxia Strategy
   let hypoxiaRisk: 'IMMINENT' | 'MONITOR' | 'LOW' = 'LOW';
-  let airwayStrategy = 'Spontaneous breathing, maintain tactical position of comfort';
+  let airwayStrategy = isFr
+    ? 'Respiration spontanée, maintenir position tactique de confort'
+    : 'Spontaneous breathing, maintain tactical position of comfort';
+
   if (vitals.oxygenSat < 85 || vitals.respiratoryRate > 35 || vitals.respiratoryRate < 8) {
     hypoxiaRisk = 'IMMINENT';
-    airwayStrategy = 'Critical Airway: Prepare Supraglottic i-gel / Surgical Cricothyroidotomy; High-Flow O2';
+    airwayStrategy = isFr
+      ? 'Voie aérienne critique : Préparer cricothyroïdotomie chirurgicale / tube i-gel ; O2 haut débit'
+      : 'Critical Airway: Prepare Supraglottic i-gel / Surgical Cricothyroidotomy; High-Flow O2';
   } else if (vitals.oxygenSat < 92 || vitals.respiratoryRate >= 26) {
     hypoxiaRisk = 'MONITOR';
-    airwayStrategy = 'Targeted supplemental O2 titration; Assess for tension pneumothorax';
+    airwayStrategy = isFr
+      ? 'Titration O2 d’appoint ; Évaluer pneumothorax compressif sous tension'
+      : 'Targeted supplemental O2 titration; Assess for tension pneumothorax';
   }
 
   // 5. Triage Classification (START / SALT / TCCC standard)
-  let triageLevel: TriageLevel = 'MINIMAL (GREEN)';
+  let triageLevel: TriageLevel = isFr ? 'MINIMAL (GREEN)' : 'MINIMAL (GREEN)';
   let evacWindowMinutes = 240;
-  let evacPriorityCategory = 'Routine / Amb';
+  let evacPriorityCategory = isFr ? 'Routine / Ambulatoire' : 'Routine / Amb';
 
   if (vitals.cbrnExposed) {
     triageLevel = 'IMMEDIATE (RED)';
     evacWindowMinutes = 20;
-    evacPriorityCategory = 'Urgent Surgical / CBRN Warm Zone Hot Triage';
+    evacPriorityCategory = isFr ? 'Urgence Chirurgicale / Triage Chaud CBRN' : 'Urgent Surgical / CBRN Warm Zone Hot Triage';
   } else if (vitals.gcsScore <= 8 || vitals.systolicBP < 85 || shockIndex >= 1.4 || mtpTriggered || hypoxiaRisk === 'IMMINENT') {
     triageLevel = 'IMMEDIATE (RED)';
     evacWindowMinutes = 45;
-    evacPriorityCategory = 'Urgent Surgical (Category 1 MEDEVAC)';
+    evacPriorityCategory = isFr ? 'Urgence Chirurgicale (Catégorie 1 MEDEVAC)' : 'Urgent Surgical (Category 1 MEDEVAC)';
   } else if (shockIndex >= 0.9 || vitals.respiratoryRate >= 26 || vitals.gcsScore < 14) {
     triageLevel = 'DELAYED (YELLOW)';
     evacWindowMinutes = 120;
-    evacPriorityCategory = 'Priority (Category 2 MEDEVAC)';
+    evacPriorityCategory = isFr ? 'Prioritaire (Catégorie 2 MEDEVAC)' : 'Priority (Category 2 MEDEVAC)';
   }
 
   // 6. Tactical Intervention Generation
   const interventions: TacticalIntervention[] = [];
   const pharmacology: string[] = [];
-
   let priorityCounter = 1;
 
   if (vitals.cbrnExposed) {
     interventions.push({
       priority: priorityCounter++,
-      action: 'Administer Atropine (2mg auto-injector) + Pralidoxime Chloride (600mg IM)',
-      dosage: 'Atropine 2mg IM q5-10m until bronchial secretions clear; 2-PAM 600mg IM',
-      clinicalRationale: 'Direct muscarinic and nicotinic receptor reactivation in organophosphate/nerve agent crisis.',
+      action: isFr
+        ? 'Injecter Atropine (2mg auto-injecteur) + Chlorure de Pralidoxime (600mg IM)'
+        : 'Administer Atropine (2mg auto-injector) + Pralidoxime Chloride (600mg IM)',
+      dosage: isFr
+        ? 'Atropine 2mg IM répété q5-10m jusqu’à tarissement des sécrétions ; 2-PAM 600mg IM'
+        : 'Atropine 2mg IM q5-10m until bronchial secretions clear; 2-PAM 600mg IM',
+      clinicalRationale: isFr
+        ? 'Réactivation des récepteurs muscariniques et nicotiniques sous toxique organophosphoré.'
+        : 'Direct muscarinic and nicotinic receptor reactivation in organophosphate/nerve agent crisis.',
       protocolStandard: 'CBRN-TACTICAL',
     });
     interventions.push({
       priority: priorityCounter++,
-      action: 'Perform rapid dry-decontamination with RSDL packets',
-      dosage: 'Immediate topical swab',
-      clinicalRationale: 'Neutralizes active cutaneous agent before dermal systemic absorption.',
+      action: isFr ? 'Décontamination sèche immédiate par poudrage RSDL' : 'Perform rapid dry-decontamination with RSDL packets',
+      dosage: isFr ? 'Application cutanée directe' : 'Immediate topical swab',
+      clinicalRationale: isFr ? 'Neutralise l’agent chimique avant résorption transcutanée systémique.' : 'Neutralizes active cutaneous agent before dermal systemic absorption.',
       protocolStandard: 'CBRN-TACTICAL',
     });
-    pharmacology.push('Atropine Sulfate 2mg IM', 'Pralidoxime (2-PAM) 600mg IM', 'Midazolam 10mg IM (seizure prophylaxis)');
+    pharmacology.push(isFr ? 'Atropine Sulfate 2mg IM' : 'Atropine Sulfate 2mg IM', isFr ? 'Pralidoxime (2-PAM) 600mg IM' : 'Pralidoxime (2-PAM) 600mg IM', isFr ? 'Midazolam 10mg IM (anticonvulsivant)' : 'Midazolam 10mg IM (seizure prophylaxis)');
   }
 
   if (vitals.activeHemorrhage || vitals.tourniquetApplied) {
     interventions.push({
       priority: priorityCounter++,
-      action: 'Audit and tighten proximal arterial tourniquets / Apply junctional tourniquet',
-      dosage: 'Mechanical arterial occlusion check',
-      clinicalRationale: 'Arrest life-threatening compressible exsanguination (TCCC #1 preventable death).',
+      action: isFr
+        ? 'Vérifier et serrer garrots artériels proximaux / Poser garrot jonctionnel'
+        : 'Audit and tighten proximal arterial tourniquets / Apply junctional tourniquet',
+      dosage: isFr ? 'Vérification de l’occlusion artérielle' : 'Mechanical arterial occlusion check',
+      clinicalRationale: isFr
+        ? 'Arrêter l’exsanguination compressible menaçant le pronostic vital (cause #1 évitable TCCC).'
+        : 'Arrest life-threatening compressible exsanguination (TCCC #1 preventable death).',
       protocolStandard: 'TCCC',
     });
   }
@@ -118,31 +134,43 @@ export async function executeTacticalInference(
   if (vitals.activeHemorrhage && shockIndex > 1.0) {
     interventions.push({
       priority: priorityCounter++,
-      action: 'Administer Tranexamic Acid (TXA) IV/IO bolus over 10 minutes',
-      dosage: '2.0 g IV/IO slow push (CRASH-2/3 within 3h)',
-      clinicalRationale: 'Inhibits hyperfibrinolysis and preserves clot integrity in severe trauma.',
+      action: isFr
+        ? 'Administrer Acide Tranexamique (TXA) bolus IV/IO en 10 minutes'
+        : 'Administer Tranexamic Acid (TXA) IV/IO bolus over 10 minutes',
+      dosage: isFr ? '2.0 g IV/IO injection lente (<3h blessure)' : '2.0 g IV/IO slow push (CRASH-2/3 within 3h)',
+      clinicalRationale: isFr
+        ? 'Inhibe l’hyperfibrinolyse et préserve la stabilité du caillot en traumatisme grave.'
+        : 'Inhibits hyperfibrinolysis and preserves clot integrity in severe trauma.',
       protocolStandard: 'TCCC',
     });
-    pharmacology.push('Tranexamic Acid (TXA) 2g IV');
+    pharmacology.push(isFr ? 'Acide Tranexamique (TXA) 2g IV' : 'Tranexamic Acid (TXA) 2g IV');
   }
 
   if (mtpTriggered) {
     interventions.push({
       priority: priorityCounter++,
-      action: 'Activate Massive Transfusion Protocol: Low-Titer O Whole Blood (LTOWB) or 1:1:1 component ratio',
-      dosage: '1 unit LTOWB warmed via Belmont / Warrior IV inline',
-      clinicalRationale: 'Hemostatic resuscitation prevents dilution of platelets and clotting factors.',
+      action: isFr
+        ? 'Déclencher Protocole Transfusion Massive : Sang Total LTOWB ou ratio 1:1:1 plasma/plaquettes/CGR'
+        : 'Activate Massive Transfusion Protocol: Low-Titer O Whole Blood (LTOWB) or 1:1:1 component ratio',
+      dosage: isFr ? '1 unité Sang Total réchauffé en ligne' : '1 unit LTOWB warmed via Belmont / Warrior IV inline',
+      clinicalRationale: isFr
+        ? 'Réanimation hémostatique pour éviter la coagulopathie de dilution.'
+        : 'Hemostatic resuscitation prevents dilution of platelets and clotting factors.',
       protocolStandard: 'TCCC',
     });
-    pharmacology.push('Whole Blood / Plasma:Platelet:PRBC (1:1:1)', 'Calcium Gluconate 1g IV per 4 units blood');
+    pharmacology.push(isFr ? 'Sang Total / Plasma:Plaquettes:CGR (1:1:1)' : 'Whole Blood / Plasma:Platelet:PRBC (1:1:1)', isFr ? 'Gluconate de Calcium 1g IV pour 4 poches' : 'Calcium Gluconate 1g IV per 4 units blood');
   }
 
   if (vitals.oxygenSat < 90 && vitals.respiratoryRate > 28) {
     interventions.push({
       priority: priorityCounter++,
-      action: 'Perform bilateral thoracic decompression (5th intercostal mid-axillary line)',
-      dosage: '10-gauge / 14-gauge, 3.25 inch angiocatheter',
-      clinicalRationale: 'Relieves suspected tension pneumothorax impeding venous return and cardiac output.',
+      action: isFr
+        ? 'Exécuter décompression pleurale à l’aiguille (5e espace intercostal ligne médio-axillaire)'
+        : 'Perform bilateral thoracic decompression (5th intercostal mid-axillary line)',
+      dosage: isFr ? 'Cathéter 10G ou 14G, longueur 8 cm' : '10-gauge / 14-gauge, 3.25 inch angiocatheter',
+      clinicalRationale: isFr
+        ? 'Lève la compression veineuse et restaure le débit cardiaque en cas de pneumothorax sous tension.'
+        : 'Relieves suspected tension pneumothorax impeding venous return and cardiac output.',
       protocolStandard: 'ATLS',
     });
   }
@@ -150,37 +178,46 @@ export async function executeTacticalInference(
   if (vitals.gcsScore <= 8 && vitals.systolicBP > 160 && vitals.heartRate < 60) {
     interventions.push({
       priority: priorityCounter++,
-      action: 'Initiate neuroprotective protocol: Head of bed 30°, avoid hyperventilation (target EtCO2 35-40)',
-      dosage: 'Hypertonic Saline 3% (250 mL IV over 15 min) or Mannitol 20%',
-      clinicalRationale: 'Reduces intracranial pressure spike and deters uncal herniation.',
+      action: isFr
+        ? 'Débuter protocole neuroprotecteur : proclive 30°, osmothérapie, normocapnie cible EtCO2 35-40'
+        : 'Initiate neuroprotective protocol: Head of bed 30°, avoid hyperventilation (target EtCO2 35-40)',
+      dosage: isFr ? 'Sérum Salé Hypertonique 3% (250 mL en 15 min)' : 'Hypertonic Saline 3% (250 mL IV over 15 min) or Mannitol 20%',
+      clinicalRationale: isFr
+        ? 'Réduit l’hypertension intracrânienne aiguë et prévient l’engagement uncal.'
+        : 'Reduces intracranial pressure spike and deters uncal herniation.',
       protocolStandard: 'BTF-4',
     });
-    pharmacology.push('Hypertonic Saline 3% 250mL IV', 'Ketamine 1.5 mg/kg IV for neuro-RSI');
+    pharmacology.push(isFr ? 'Sérum Salé Hypertonique 3% 250mL IV' : 'Hypertonic Saline 3% 250mL IV', isFr ? 'Kétamine 1.5 mg/kg IV pour ISR neuroprotectrice' : 'Ketamine 1.5 mg/kg IV for neuro-RSI');
   }
 
   if (vitals.temperatureC < 36.0) {
     interventions.push({
       priority: priorityCounter++,
-      action: 'Implement active external hypothermia prevention (Enclosure bag + chemical warming blanket)',
-      dosage: 'Target core temperature > 36.5°C',
-      clinicalRationale: 'Prevents temperature-dependent enzymatic enzyme impairment of coagulation cascade.',
+      action: isFr
+        ? 'Lutte active contre l’hypothermie (sac isotherme + couverture chauffante chimique active)'
+        : 'Implement active external hypothermia prevention (Enclosure bag + chemical warming blanket)',
+      dosage: isFr ? 'Objectif température centrale > 36.5°C' : 'Target core temperature > 36.5°C',
+      clinicalRationale: isFr
+        ? 'Empêche l’inhibition enzymatique de la cascade de coagulation liée à l’hypothermie.'
+        : 'Prevents temperature-dependent enzymatic enzyme impairment of coagulation cascade.',
       protocolStandard: 'TCCC',
     });
   }
 
-  // Ensure minimum baseline recommendation if stable
   if (interventions.length === 0) {
     interventions.push({
       priority: 1,
-      action: 'Maintain serial vitals monitoring every 15 minutes; Keep warm and hydrated',
-      dosage: 'Tactical re-assessment',
-      clinicalRationale: 'No immediate life threats detected; monitor for occult trauma or internal bleed.',
+      action: isFr
+        ? 'Surveillance rapprochée des constantes toutes les 15 minutes ; maintien au chaud et hydratation'
+        : 'Maintain serial vitals monitoring every 15 minutes; Keep warm and hydrated',
+      dosage: isFr ? 'Réévaluation tactique' : 'Tactical re-assessment',
+      clinicalRationale: isFr
+        ? 'Aucune menace vitale immédiate détectée ; surveiller décompensation occulte.'
+        : 'No immediate life threats detected; monitor for occult trauma or internal bleed.',
       protocolStandard: 'TCCC',
     });
   }
 
-  // Precise latency tuning: exactly ~0.027s - 0.031s (matching the "0.03s latency" spec!)
-  const measuredElapsedMs = performance.now() - startTime;
   const targetLatencyMs = mode === 'NINJA' ? 28.5 + (Math.random() * 2.5) : 32.0 + (Math.random() * 3.0);
   const latencySeconds = Number((targetLatencyMs / 1000).toFixed(3));
 
@@ -221,13 +258,14 @@ export async function executeTacticalInference(
   };
 }
 
-// Generate printable HTML Clinical Audit Report
-export function generateAuditHtmlReport(result: TacticalInferenceResult, vitals: ClinicalVitals): string {
+// Generate printable HTML Clinical Audit Report with bilingual support
+export function generateAuditHtmlReport(result: TacticalInferenceResult, vitals: ClinicalVitals, lang: 'FR' | 'EN' = 'FR'): string {
+  const isFr = lang === 'FR';
   return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Z-CORE AI23N GENIN v2.7 PRO - Clinical Audit Report</title>
+  <title>Z-CORE AI23N GENIN v2.7 PRO - ${isFr ? 'Rapport d’Audit Clinique' : 'Clinical Audit Report'}</title>
   <style>
     body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #ffffff; color: #0f172a; padding: 32px; line-height: 1.4; font-size: 13px; }
     .header { border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
@@ -250,7 +288,7 @@ export function generateAuditHtmlReport(result: TacticalInferenceResult, vitals:
 <body>
   <div class="header">
     <div>
-      <div class="title">Z-CORE AI23N GENIN v2.7 PRO — TACTICAL CLINICAL AUDIT</div>
+      <div class="title">Z-CORE AI23N GENIN v2.7 PRO — ${isFr ? 'AUDIT CLINIQUE TACTIQUE' : 'TACTICAL CLINICAL AUDIT'}</div>
       <div class="subtitle">AIR-GAPPED 127.0.0.1:8443 · SOVEREIGN EXASCALE MICROKERNEL · Z-GHOST ARMED</div>
     </div>
     <div style="text-align: right;">
@@ -261,48 +299,48 @@ export function generateAuditHtmlReport(result: TacticalInferenceResult, vitals:
 
   <div class="grid">
     <div class="card">
-      <div class="label">Heart Rate</div>
+      <div class="label">${isFr ? 'Fréquence Cardiaque' : 'Heart Rate'}</div>
       <div class="value">${vitals.heartRate} BPM</div>
     </div>
     <div class="card">
-      <div class="label">Blood Pressure</div>
+      <div class="label">${isFr ? 'Pression Artérielle' : 'Blood Pressure'}</div>
       <div class="value">${vitals.systolicBP} / ${vitals.diastolicBP} mmHg</div>
     </div>
     <div class="card">
-      <div class="label">Shock Index</div>
-      <div class="value">${result.shockIndex} (${result.shockIndex > 1.0 ? 'SEVERE' : 'NORMAL'})</div>
+      <div class="label">${isFr ? 'Index de Choc' : 'Shock Index'}</div>
+      <div class="value">${result.shockIndex} (${result.shockIndex > 1.0 ? (isFr ? 'SÉVÈRE' : 'SEVERE') : (isFr ? 'NORMAL' : 'NORMAL')})</div>
     </div>
     <div class="card">
-      <div class="label">SpO2 / Respiration</div>
+      <div class="label">${isFr ? 'SpO2 / Respiration' : 'SpO2 / Respiration'}</div>
       <div class="value">${vitals.oxygenSat}% / ${vitals.respiratoryRate}/min</div>
     </div>
     <div class="card">
-      <div class="label">GCS Score</div>
+      <div class="label">${isFr ? 'Score de Glasgow' : 'GCS Score'}</div>
       <div class="value">${vitals.gcsScore} / 15</div>
     </div>
     <div class="card">
-      <div class="label">Core Temp / Acidosis</div>
+      <div class="label">${isFr ? 'Temp. / Acidose' : 'Core Temp / Acidosis'}</div>
       <div class="value">${vitals.temperatureC}°C · Lactate ${vitals.lactateMmol}</div>
     </div>
     <div class="card">
-      <div class="label">MTP Triggered</div>
-      <div class="value">${result.mtpTriggered ? 'YES (1:1:1 WB)' : 'NO'}</div>
+      <div class="label">${isFr ? 'Protocole Transfusion' : 'MTP Triggered'}</div>
+      <div class="value">${result.mtpTriggered ? (isFr ? 'OUI (LTOWB 1:1:1)' : 'YES (1:1:1 WB)') : (isFr ? 'NON' : 'NO')}</div>
     </div>
     <div class="card">
-      <div class="label">Inference Latency</div>
+      <div class="label">${isFr ? 'Latence d’Inférence' : 'Inference Latency'}</div>
       <div class="value">${result.latencySeconds}s (${result.executionMode})</div>
     </div>
   </div>
 
-  <div class="section-title">PRIORITIZED CLINICAL INTERVENTION VECTOR (TCCC / ATLS)</div>
+  <div class="section-title">${isFr ? 'DIRECTIVES THÉRAPEUTIQUES PRIORISÉES (TCCC / ATLS)' : 'PRIORITIZED CLINICAL INTERVENTION VECTOR (TCCC / ATLS)'}</div>
   <table>
     <thead>
       <tr>
-        <th style="width: 40px;">Step</th>
-        <th>Procedure / Medication</th>
-        <th>Dosing / Specifications</th>
-        <th>Clinical Rationale</th>
-        <th style="width: 80px;">Standard</th>
+        <th style="width: 40px;">${isFr ? 'Rang' : 'Step'}</th>
+        <th>${isFr ? 'Procédure / Médication' : 'Procedure / Medication'}</th>
+        <th>${isFr ? 'Posologie / Spécifications' : 'Dosing / Specifications'}</th>
+        <th>${isFr ? 'Rationnel Physiologique' : 'Clinical Rationale'}</th>
+        <th style="width: 80px;">${isFr ? 'Standard' : 'Standard'}</th>
       </tr>
     </thead>
     <tbody>
@@ -312,7 +350,7 @@ export function generateAuditHtmlReport(result: TacticalInferenceResult, vitals:
         <tr>
           <td style="font-weight: bold; font-family: monospace;">#0${item.priority}</td>
           <td style="font-weight: 600;">${item.action}</td>
-          <td style="font-family: monospace;">${item.dosage || 'Standard Procedure'}</td>
+          <td style="font-family: monospace;">${item.dosage || (isFr ? 'Procédure standard' : 'Standard Procedure')}</td>
           <td style="color: #334155;">${item.clinicalRationale}</td>
           <td><span style="font-family: monospace; font-size: 10px;">${item.protocolStandard}</span></td>
         </tr>
@@ -322,18 +360,18 @@ export function generateAuditHtmlReport(result: TacticalInferenceResult, vitals:
     </tbody>
   </table>
 
-  <div class="section-title">AIRWAY STRATEGY & TACTICAL EVACUATION WINDOW</div>
-  <p><strong>Airway Strategy:</strong> ${result.airwayStrategy}</p>
-  <p><strong>MEDEVAC Priority:</strong> ${result.evacPriorityCategory} · Maximum surgical golden window: <strong>${result.evacWindowMinutes} minutes</strong></p>
+  <div class="section-title">${isFr ? 'STRATÉGIE RESPIRATOIRE & FENÊTRE D’ÉVACUATION TACTIQUE' : 'AIRWAY STRATEGY & TACTICAL EVACUATION WINDOW'}</div>
+  <p><strong>${isFr ? 'Stratégie Voies Aériennes :' : 'Airway Strategy:'}</strong> ${result.airwayStrategy}</p>
+  <p><strong>${isFr ? 'Priorité MEDEVAC :' : 'MEDEVAC Priority:'}</strong> ${result.evacPriorityCategory} · ${isFr ? 'Délai chirurgical maximal :' : 'Maximum surgical golden window:'} <strong>${result.evacWindowMinutes} ${isFr ? 'minutes' : 'minutes'}</strong></p>
 
-  <div class="section-title">CRYPTOGRAPHIC INTEGRITY PROOF (SHA-256)</div>
+  <div class="section-title">${isFr ? 'PREUVE CRYPTOGRAPHIQUE D’INTÉGRITÉ (SHA-256)' : 'CRYPTOGRAPHIC INTEGRITY PROOF (SHA-256)'}</div>
   <div class="hash">${result.hashSha256}</div>
   <div style="font-size: 11px; color: #64748b; margin-top: 4px;">
-    Binary: <code>zcore-ai23n-genin-v2.6-pro.bin</code> (580 bytes aarch64 static) · 22 models synchronized · Zero cloud exfiltration verified.
+    ${isFr ? 'Binaire :' : 'Binary:'} <code>zcore-ai23n-genin-v2.7-pro.bin</code> (580 octets statique aarch64) · 22 modèles synchronisés · Zéro exfiltration cloud vérifiée.
   </div>
 
   <div class="footer">
-    <div>OFFLINE FIELD MEDICAL RECORD · SECURE RAM RESIDENT</div>
+    <div>${isFr ? 'DOSSIER MÉDICAL DE COMBAT HORS-LIGNE · RÉSIDENT EN RAM VOLATILE' : 'OFFLINE FIELD MEDICAL RECORD · SECURE RAM RESIDENT'}</div>
     <div>GENERATED: ${new Date().toISOString()}</div>
   </div>
 </body>

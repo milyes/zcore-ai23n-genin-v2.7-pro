@@ -15,6 +15,7 @@ import {
 import { ClinicalVitals, ExecutionMode, TacticalInferenceResult } from '../types/zcore';
 import { SCENARIO_PRESETS } from '../data/scenarios';
 import { executeTacticalInference, generateAuditHtmlReport } from '../utils/cryptoAudit';
+import { useLanguage } from '../context/LanguageContext';
 
 interface InferenceConsoleProps {
   onInferenceCompleted: (result: TacticalInferenceResult) => void;
@@ -33,11 +34,34 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
   onDownloadBinary,
   onBuildHtml,
 }) => {
+  const { language, t } = useLanguage();
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>(SCENARIO_PRESETS[0].id);
   const [vitals, setVitals] = useState<ClinicalVitals>({ ...SCENARIO_PRESETS[0].vitals });
   const [executionMode, setExecutionMode] = useState<ExecutionMode>('NINJA');
   const [isInferring, setIsInferring] = useState<boolean>(false);
   const [copiedHash, setCopiedHash] = useState<boolean>(false);
+
+  const getScenarioTitle = (id: string, defTitle: string) => {
+    if (language === 'FR') {
+      if (id === 'trauma-blast-shrapnel') return t.scenarios.s1Title;
+      if (id === 'neuro-icp-herniation') return t.scenarios.s2Title;
+      if (id === 'septic-shock-austere') return t.scenarios.s3Title;
+      if (id === 'cbrn-organophosphate') return t.scenarios.s4Title;
+      if (id === 'crush-syndrome-collapse') return t.scenarios.s5Title;
+    }
+    return defTitle;
+  };
+
+  const getScenarioDesc = (id: string, defDesc: string) => {
+    if (language === 'FR') {
+      if (id === 'trauma-blast-shrapnel') return t.scenarios.s1Desc;
+      if (id === 'neuro-icp-herniation') return t.scenarios.s2Desc;
+      if (id === 'septic-shock-austere') return t.scenarios.s3Desc;
+      if (id === 'cbrn-organophosphate') return t.scenarios.s4Desc;
+      if (id === 'crush-syndrome-collapse') return t.scenarios.s5Desc;
+    }
+    return defDesc;
+  };
 
   const handleSelectScenario = (scenarioId: string) => {
     setSelectedScenarioId(scenarioId);
@@ -49,9 +73,8 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
 
   const handleRunInference = async () => {
     setIsInferring(true);
-    // Allow minimal render cycle to show indicator, then execute in ~0.030s
     setTimeout(async () => {
-      const res = await executeTacticalInference(vitals, executionMode);
+      const res = await executeTacticalInference(vitals, executionMode, false, language);
       onInferenceCompleted(res);
       setIsInferring(false);
     }, 28);
@@ -59,7 +82,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
 
   const handleExportPdf = () => {
     if (!latestResult) return;
-    const html = generateAuditHtmlReport(latestResult, vitals);
+    const html = generateAuditHtmlReport(latestResult, vitals, language);
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(html);
@@ -87,13 +110,13 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
       {/* Top Banner / Tactical Metadata Ribbon */}
       <div className="border border-slate-800 bg-slate-900/60 p-4 rounded-lg flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4 text-xs font-mono text-slate-400">
-          <span className="text-white font-medium">SOVEREIGN CORE: 580 BYTES (v2.7 PRO)</span>
+          <span className="text-white font-medium">{t.banner.core}</span>
           <span aria-hidden="true">·</span>
-          <span>22 MODELS @ 5,400 INF/SEC</span>
+          <span>{t.banner.throughput}</span>
           <span aria-hidden="true">·</span>
-          <span>Z-GHOST · Z-SYNC · Z-LEARN (INT2)</span>
+          <span>{t.banner.modules}</span>
           <span aria-hidden="true">·</span>
-          <span>POWER: {boostActive ? '45W (BOOST)' : '<30W (SOVEREIGN)'}</span>
+          <span>{boostActive ? t.banner.powerBoost : t.banner.powerSovereign}</span>
         </div>
 
         {/* Segmented Mode Selector */}
@@ -102,21 +125,21 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
             onClick={() => setExecutionMode('NINJA')}
             className={`px-3 py-1 text-xs font-mono rounded transition-colors cursor-pointer ${
               executionMode === 'NINJA'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-semibold'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            NINJA MODE (0.03s · Silent)
+            {t.banner.modeNinja}
           </button>
           <button
             onClick={() => setExecutionMode('CALIBRATED_AUDIT')}
             className={`px-3 py-1 text-xs font-mono rounded transition-colors cursor-pointer ${
               executionMode === 'CALIBRATED_AUDIT'
-                ? 'bg-slate-800 text-slate-100 border border-slate-700'
+                ? 'bg-slate-800 text-slate-100 border border-slate-700 font-semibold'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            CALIBRATED AUDIT (Full Evidence)
+            {t.banner.modeAudit}
           </button>
         </div>
       </div>
@@ -129,9 +152,9 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
           <div className="border border-slate-800 bg-slate-900/40 p-4 rounded-lg space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-mono uppercase tracking-wider text-slate-400">
-                Tactical Scenario Preset
+                {t.scenarios.title}
               </h2>
-              <span className="text-xs text-slate-500 font-mono">Triage Presets</span>
+              <span className="text-xs text-slate-500 font-mono">{t.scenarios.subtitle}</span>
             </div>
 
             <div className="grid grid-cols-1 gap-2">
@@ -146,11 +169,13 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-100">{scenario.title}</span>
+                    <span className="text-xs font-semibold text-slate-100">
+                      {getScenarioTitle(scenario.id, scenario.title)}
+                    </span>
                     <span className="text-[11px] font-mono text-cyan-400/90">{scenario.category}</span>
                   </div>
                   <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">
-                    {scenario.summary}
+                    {getScenarioDesc(scenario.id, scenario.summary)}
                   </p>
                 </button>
               ))}
@@ -161,7 +186,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
           <div className="border border-slate-800 bg-slate-900/40 p-4 rounded-lg space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2">
               <h2 className="text-xs font-mono uppercase tracking-wider text-slate-400">
-                Physiological Vitals Matrix
+                {t.vitals.title}
               </h2>
               <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
                 <span>SI: <strong className="text-cyan-400">{shockIndex}</strong></span>
@@ -174,7 +199,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
               {/* Heart Rate */}
               <div className="bg-slate-950/80 border border-slate-800 p-2.5 rounded">
                 <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span>Heart Rate</span>
+                  <span>{t.vitals.hr}</span>
                   <span className="text-slate-500">BPM</span>
                 </div>
                 <div className="flex items-center gap-2 mt-1.5">
@@ -195,7 +220,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
               {/* Systolic BP */}
               <div className="bg-slate-950/80 border border-slate-800 p-2.5 rounded">
                 <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span>Systolic BP</span>
+                  <span>{t.vitals.sbp}</span>
                   <span className="text-slate-500">mmHg</span>
                 </div>
                 <div className="flex items-center gap-2 mt-1.5">
@@ -216,7 +241,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
               {/* Diastolic BP */}
               <div className="bg-slate-950/80 border border-slate-800 p-2.5 rounded">
                 <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span>Diastolic BP</span>
+                  <span>{t.vitals.dbp}</span>
                   <span className="text-slate-500">mmHg</span>
                 </div>
                 <div className="flex items-center gap-2 mt-1.5">
@@ -237,7 +262,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
               {/* SpO2 */}
               <div className="bg-slate-950/80 border border-slate-800 p-2.5 rounded">
                 <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span>Oxygen Saturation</span>
+                  <span>{t.vitals.spo2}</span>
                   <span className="text-slate-500">%</span>
                 </div>
                 <div className="flex items-center gap-2 mt-1.5">
@@ -258,7 +283,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
               {/* Respiratory Rate */}
               <div className="bg-slate-950/80 border border-slate-800 p-2.5 rounded">
                 <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span>Respiration Rate</span>
+                  <span>{t.vitals.rr}</span>
                   <span className="text-slate-500">/min</span>
                 </div>
                 <div className="flex items-center gap-2 mt-1.5">
@@ -279,7 +304,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
               {/* GCS */}
               <div className="bg-slate-950/80 border border-slate-800 p-2.5 rounded">
                 <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span>Glasgow Coma Scale</span>
+                  <span>{t.vitals.gcs}</span>
                   <span className="text-slate-500">3-15</span>
                 </div>
                 <div className="flex items-center gap-2 mt-1.5">
@@ -300,7 +325,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
               {/* Blood Lactate */}
               <div className="bg-slate-950/80 border border-slate-800 p-2.5 rounded">
                 <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span>Blood Lactate</span>
+                  <span>{t.vitals.lactate}</span>
                   <span className="text-slate-500">mmol/L</span>
                 </div>
                 <div className="flex items-center gap-2 mt-1.5">
@@ -322,7 +347,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
               {/* Core Temperature */}
               <div className="bg-slate-950/80 border border-slate-800 p-2.5 rounded">
                 <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span>Core Temperature</span>
+                  <span>{t.vitals.temp}</span>
                   <span className="text-slate-500">°C</span>
                 </div>
                 <div className="flex items-center gap-2 mt-1.5">
@@ -351,7 +376,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
                   onChange={(e) => setVitals({ ...vitals, activeHemorrhage: e.target.checked })}
                   className="rounded accent-cyan-400"
                 />
-                <span className="text-slate-300">Active Arterial Bleed</span>
+                <span className="text-slate-300">{t.vitals.activeBleed}</span>
               </label>
 
               <label className="flex items-center gap-2 p-2 rounded bg-slate-950/60 border border-slate-800 cursor-pointer text-xs">
@@ -361,7 +386,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
                   onChange={(e) => setVitals({ ...vitals, tourniquetApplied: e.target.checked })}
                   className="rounded accent-cyan-400"
                 />
-                <span className="text-slate-300">Tourniquet Applied</span>
+                <span className="text-slate-300">{t.vitals.tourniquet}</span>
               </label>
 
               <label className="flex items-center gap-2 p-2 rounded bg-slate-950/60 border border-slate-800 cursor-pointer text-xs">
@@ -371,7 +396,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
                   onChange={(e) => setVitals({ ...vitals, alteredMentalStatus: e.target.checked })}
                   className="rounded accent-cyan-400"
                 />
-                <span className="text-slate-300">Altered Sensorium</span>
+                <span className="text-slate-300">{t.vitals.alteredState}</span>
               </label>
 
               <label className="flex items-center gap-2 p-2 rounded bg-slate-950/60 border border-slate-800 cursor-pointer text-xs">
@@ -382,7 +407,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
                   className="rounded accent-rose-500"
                 />
                 <span className={vitals.cbrnExposed ? 'text-rose-400 font-semibold' : 'text-slate-300'}>
-                  CBRN / Toxin Vector
+                  {t.vitals.cbrn}
                 </span>
               </label>
             </div>
@@ -396,12 +421,12 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
               {isInferring ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>EXÉCUTION 22 MODÈLES...</span>
+                  <span>{t.vitals.executing}</span>
                 </>
               ) : (
                 <>
                   <Activity className="w-4 h-4" />
-                  <span>LANCER AI23N (0.03s INFERENCE)</span>
+                  <span>{t.vitals.runBtn}</span>
                 </>
               )}
             </button>
@@ -414,7 +439,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
                 className="py-2 px-3 bg-cyan-400/10 hover:bg-cyan-400/20 border border-cyan-500/40 text-cyan-300 font-semibold text-xs font-mono rounded transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                 title="Exporter le binaire statique 580 bytes"
               >
-                <span>EXPORT BIN (580B)</span>
+                <span>{t.actions.exportBin}</span>
               </button>
 
               <button
@@ -423,7 +448,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
                 className="py-2 px-3 bg-slate-950 hover:bg-slate-900 border border-slate-700 text-slate-300 font-semibold text-xs font-mono rounded transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                 title="Générer l'application standalone HTML 100% offline"
               >
-                <span>BUILD HTML</span>
+                <span>{t.actions.buildHtml}</span>
               </button>
             </div>
           </div>
@@ -437,16 +462,16 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
                 <div>
                   <div className="text-xs font-mono text-slate-400 uppercase tracking-wider">
-                    Consensus Clinical Triage
+                    {t.results.triageTitle}
                   </div>
                   <div className="text-2xl font-bold tracking-tight text-white mt-0.5 flex items-center gap-2">
                     <span
                       className={
-                        latestResult.triageLevel.includes('RED')
+                        latestResult.triageLevel.includes('RED') || latestResult.triageLevel.includes('ROUGE')
                           ? 'text-rose-400'
-                          : latestResult.triageLevel.includes('YELLOW')
+                          : latestResult.triageLevel.includes('YELLOW') || latestResult.triageLevel.includes('JAUNE')
                           ? 'text-amber-400'
-                          : latestResult.triageLevel.includes('GREEN')
+                          : latestResult.triageLevel.includes('GREEN') || latestResult.triageLevel.includes('VERT')
                           ? 'text-emerald-400'
                           : 'text-slate-400'
                       }
@@ -458,13 +483,13 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
 
                 <div className="text-right text-xs font-mono text-slate-400 space-y-1">
                   <div>
-                    LATENCY: <strong className="text-cyan-400 tabular-nums">{latestResult.latencySeconds}s</strong>
+                    {t.results.latency} : <strong className="text-cyan-400 tabular-nums">{latestResult.latencySeconds}s</strong>
                   </div>
                   <div>
-                    CONFIDENCE: <strong className="text-slate-200 tabular-nums">{latestResult.confidenceScore}%</strong>
+                    {t.results.confidence} : <strong className="text-slate-200 tabular-nums">{latestResult.confidenceScore}%</strong>
                   </div>
                   <div>
-                    EXECUTION: <span className="text-slate-300">{latestResult.executionMode}</span>
+                    {t.results.execution} : <span className="text-slate-300">{latestResult.executionMode}</span>
                   </div>
                 </div>
               </div>
@@ -472,31 +497,31 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
               {/* Primary Key Indicators */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="bg-slate-950/70 border border-slate-800 p-2.5 rounded">
-                  <div className="text-[10px] uppercase font-mono text-slate-500">Shock Index</div>
+                  <div className="text-[10px] uppercase font-mono text-slate-500">{t.results.shockIndex}</div>
                   <div className="text-xl font-bold font-mono text-slate-100 mt-1 tabular-nums">
                     {latestResult.shockIndex}
                   </div>
                   <div className="text-[11px] font-mono text-slate-400 mt-0.5">
-                    {latestResult.shockIndex >= 1.4 ? 'Profound Shock' : latestResult.shockIndex >= 1.0 ? 'Elevated SI' : 'Normal (<0.9)'}
+                    {latestResult.shockIndex >= 1.4 ? t.results.shockSevere : latestResult.shockIndex >= 1.0 ? t.results.shockElevated : t.results.shockNormal}
                   </div>
                 </div>
 
                 <div className="bg-slate-950/70 border border-slate-800 p-2.5 rounded">
-                  <div className="text-[10px] uppercase font-mono text-slate-500">MTP Blood Trigger</div>
+                  <div className="text-[10px] uppercase font-mono text-slate-500">{t.results.mtpBlood}</div>
                   <div className="text-xl font-bold font-mono text-slate-100 mt-1">
                     {latestResult.mtpTriggered ? (
-                      <span className="text-rose-400">ACTIVE 1:1:1</span>
+                      <span className="text-rose-400">{t.results.mtpActive}</span>
                     ) : (
-                      <span className="text-slate-400">HOLD</span>
+                      <span className="text-slate-400">{t.results.mtpHold}</span>
                     )}
                   </div>
                   <div className="text-[11px] font-mono text-slate-400 mt-0.5">
-                    {latestResult.mtpTriggered ? 'Whole Blood Ready' : 'Normovolemic'}
+                    {latestResult.mtpTriggered ? (language === 'FR' ? 'Sang Total Prêt' : 'Whole Blood Ready') : (language === 'FR' ? 'Normovolémique' : 'Normovolemic')}
                   </div>
                 </div>
 
                 <div className="bg-slate-950/70 border border-slate-800 p-2.5 rounded">
-                  <div className="text-[10px] uppercase font-mono text-slate-500">Lethal Triad Risk</div>
+                  <div className="text-[10px] uppercase font-mono text-slate-500">{t.results.lethalTriad}</div>
                   <div className="text-xl font-bold font-mono text-slate-100 mt-1">
                     <span
                       className={
@@ -516,12 +541,12 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
                 </div>
 
                 <div className="bg-slate-950/70 border border-slate-800 p-2.5 rounded">
-                  <div className="text-[10px] uppercase font-mono text-slate-500">MEDEVAC Runway</div>
+                  <div className="text-[10px] uppercase font-mono text-slate-500">{t.results.medevacRunway}</div>
                   <div className="text-xl font-bold font-mono text-slate-100 mt-1 tabular-nums">
                     {latestResult.evacWindowMinutes}m
                   </div>
                   <div className="text-[11px] font-mono text-slate-400 mt-0.5">
-                    Golden Hour Window
+                    {t.results.goldenHour}
                   </div>
                 </div>
               </div>
@@ -530,7 +555,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-mono uppercase tracking-wider text-slate-300">
-                    Tactical Intervention Directives (Ordered Priority)
+                    {t.results.directivesTitle}
                   </h3>
                   <span className="text-xs text-slate-500 font-mono">TCCC / ATLS Standard</span>
                 </div>
@@ -548,7 +573,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
                         <div className="text-sm font-semibold text-slate-100">{item.action}</div>
                         {item.dosage && (
                           <div className="text-xs font-mono text-slate-300 bg-slate-900/60 px-2 py-0.5 rounded inline-block">
-                            Dose: {item.dosage}
+                            Dose : {item.dosage}
                           </div>
                         )}
                         {latestResult.executionMode === 'CALIBRATED_AUDIT' && (
@@ -568,12 +593,12 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
               {/* Airway & Pharmacology Footprint */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800 text-xs">
                 <div className="bg-slate-950/40 border border-slate-800/80 p-3 rounded space-y-1">
-                  <span className="text-slate-400 font-mono text-[10px] uppercase">Airway Trajectory</span>
+                  <span className="text-slate-400 font-mono text-[10px] uppercase">{t.results.airwayTrauma}</span>
                   <p className="text-slate-200 leading-relaxed font-sans">{latestResult.airwayStrategy}</p>
                 </div>
 
                 <div className="bg-slate-950/40 border border-slate-800/80 p-3 rounded space-y-1">
-                  <span className="text-slate-400 font-mono text-[10px] uppercase">Tactical Pharmacology</span>
+                  <span className="text-slate-400 font-mono text-[10px] uppercase">{t.results.pharmacology}</span>
                   <div className="flex flex-wrap gap-1.5 mt-1">
                     {latestResult.pharmacology.length > 0 ? (
                       latestResult.pharmacology.map((drug, i) => (
@@ -583,7 +608,9 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
                         </span>
                       ))
                     ) : (
-                      <span className="text-slate-500 font-mono text-xs">No acute meds required</span>
+                      <span className="text-slate-500 font-mono text-xs">
+                        {language === 'FR' ? 'Aucun médicament aigu requis' : 'No acute meds required'}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -592,13 +619,13 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
               {/* Cryptographic Proof SHA-256 */}
               <div className="pt-2 border-t border-slate-800 space-y-2">
                 <div className="flex items-center justify-between text-xs font-mono text-slate-400">
-                  <span>SHA-256 AUDIT DIGEST</span>
+                  <span>{t.results.shaDigest}</span>
                   <button
                     onClick={handleCopyHash}
                     className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer"
                   >
                     {copiedHash ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedHash ? 'Copied' : 'Copy Hash'}</span>
+                    <span>{copiedHash ? t.results.copied : t.results.copy}</span>
                   </button>
                 </div>
                 <div className="p-2 bg-slate-950 border border-slate-800 rounded font-mono text-xs text-slate-300 break-all select-all">
@@ -613,7 +640,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
                   className="px-3.5 py-2 text-xs font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 rounded transition-colors flex items-center gap-1.5 cursor-pointer font-mono"
                 >
                   <FileText className="w-3.5 h-3.5 text-slate-300" />
-                  <span>Generate Audit PDF</span>
+                  <span>{t.results.generatePdf}</span>
                 </button>
 
                 <button
@@ -621,7 +648,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
                   className="px-3.5 py-2 text-xs font-medium text-amber-300 bg-amber-950/30 hover:bg-amber-900/40 border border-amber-800/60 rounded transition-colors flex items-center gap-1.5 cursor-pointer font-mono"
                 >
                   <Zap className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{boostActive ? 'Re-synthesize with 45W Boost' : 'Engage 45W Boost (PIN 2300)'}</span>
+                  <span>{boostActive ? t.results.boostReModalBtn : t.results.boostModalBtn}</span>
                 </button>
               </div>
 
@@ -640,10 +667,12 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
 
                   {latestResult.boostPayload.synthesis.lethalThreats && (
                     <div className="space-y-1">
-                      <div className="text-[11px] font-mono text-slate-400 uppercase">Imminent Lethal Threats:</div>
+                      <div className="text-[11px] font-mono text-slate-400 uppercase">
+                        {language === 'FR' ? 'Menaces Vitales Imminentes :' : 'Imminent Lethal Threats:'}
+                      </div>
                       <ul className="text-xs text-slate-200 list-disc list-inside space-y-0.5">
-                        {latestResult.boostPayload.synthesis.lethalThreats.map((t: string, idx: number) => (
-                          <li key={idx}>{t}</li>
+                        {latestResult.boostPayload.synthesis.lethalThreats.map((tItem: string, idx: number) => (
+                          <li key={idx}>{tItem}</li>
                         ))}
                       </ul>
                     </div>
@@ -651,7 +680,9 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
 
                   {latestResult.boostPayload.synthesis.airwayTraumaAssessment && (
                     <div className="text-xs text-slate-300 pt-1 border-t border-amber-900/40">
-                      <strong className="text-amber-300/90 font-mono">Airway Assessment: </strong>
+                      <strong className="text-amber-300/90 font-mono">
+                        {language === 'FR' ? 'Évaluation Voies Aériennes : ' : 'Airway Assessment: '}
+                      </strong>
                       {latestResult.boostPayload.synthesis.airwayTraumaAssessment}
                     </div>
                   )}
@@ -662,16 +693,16 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
             <div className="border border-slate-800 bg-slate-900/30 rounded-lg p-12 text-center space-y-3">
               <Activity className="w-8 h-8 text-cyan-400/60 mx-auto" />
               <div className="text-sm font-semibold text-slate-200">
-                Ready for Tactical Clinical Inference
+                {t.results.emptyTitle}
               </div>
               <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                Select a battlefield/disaster triage preset or modify the physiological vitals matrix on the left, then trigger sovereign inference to activate the 22 embedded neural models.
+                {t.results.emptyDesc}
               </p>
               <button
                 onClick={handleRunInference}
-                className="mt-2 px-4 py-2 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-semibold text-xs font-mono rounded transition-colors cursor-pointer"
+                className="mt-2 px-4 py-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-semibold text-xs font-mono rounded transition-colors cursor-pointer"
               >
-                EXECUTE NOW (0.03s)
+                {t.actions.launch} (0.03s)
               </button>
             </div>
           )}

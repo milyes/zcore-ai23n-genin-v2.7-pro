@@ -3,9 +3,15 @@ import { Download, Terminal, Cpu, RefreshCw, Check, Copy, Code2 } from 'lucide-r
 
 interface CompilerStudioProps {
   onDownloadBinary: () => void;
+  onLancerAI23N?: () => void;
+  onBuildHtml?: () => void;
 }
 
-export const CompilerStudio: React.FC<CompilerStudioProps> = ({ onDownloadBinary }) => {
+export const CompilerStudio: React.FC<CompilerStudioProps> = ({
+  onDownloadBinary,
+  onLancerAI23N,
+  onBuildHtml,
+}) => {
   const [quantizeInt4, setQuantizeInt4] = useState<boolean>(true);
   const [prune80, setPrune80] = useState<boolean>(true);
   const [staticLink, setStaticLink] = useState<boolean>(true);
@@ -79,7 +85,7 @@ exit_sequence:
 
   return (
     <div className="space-y-6">
-      {/* Top Header Card */}
+      {/* Top Header Card with direct actions */}
       <div className="border border-slate-800 bg-slate-900/60 p-5 rounded-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -93,13 +99,37 @@ exit_sequence:
           </p>
         </div>
 
-        <button
-          onClick={onDownloadBinary}
-          className="px-4 py-2 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-semibold text-xs font-mono rounded transition-colors flex items-center gap-2 cursor-pointer shadow-sm whitespace-nowrap"
-        >
-          <Download className="w-4 h-4" />
-          <span>DOWNLOAD .BIN (580 BYTES)</span>
-        </button>
+        {/* Boutons d'export et d'exécution directe */}
+        <div className="flex flex-wrap items-center gap-2">
+          {onLancerAI23N && (
+            <button
+              onClick={onLancerAI23N}
+              className="px-3.5 py-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs font-mono rounded transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+              title="Lancer l'inférence tactique IA23N en 0.03s"
+            >
+              <span>LANCER AI23N</span>
+            </button>
+          )}
+
+          <button
+            onClick={onDownloadBinary}
+            className="px-3.5 py-2 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs font-mono rounded transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm whitespace-nowrap"
+            title="Télécharger zcore-ai23n-genin-v2.7-pro.bin"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>EXPORT BIN (580B)</span>
+          </button>
+
+          {onBuildHtml && (
+            <button
+              onClick={onBuildHtml}
+              className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-mono rounded transition-colors flex items-center gap-1.5 cursor-pointer"
+              title="Générer l'application HTML standalone 100% offline"
+            >
+              <span>BUILD HTML</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Grid: Compiler Flags & Metrics vs Hex/ASM Inspection */}

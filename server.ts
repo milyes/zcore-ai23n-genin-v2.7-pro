@@ -233,6 +233,25 @@ app.get('/api/binary/download', (req: Request, res: Response) => {
   }
 });
 
+// Endpoint: Build standalone single-file air-gapped HTML application
+app.get('/api/build/html', (_req: Request, res: Response) => {
+  try {
+    const standaloneHtmlPath = path.resolve(__dirname, 'dist', 'index.html');
+    if (fs.existsSync(standaloneHtmlPath)) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename="zcore-ai23n-genin-v2.7-pro-standalone.html"');
+      return res.sendFile(standaloneHtmlPath);
+    }
+    // Fallback template if dist is not compiled yet
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="zcore-ai23n-genin-v2.7-pro-standalone.html"');
+    return res.send(`<!doctype html><html><head><meta charset="utf-8"><title>Z-CORE AI23N GENIN v2.7 PRO</title></head><body style="background:#020617;color:#fff;font-family:monospace;padding:32px;"><h1>Z-CORE AI23N GENIN v2.7 PRO</h1><p>Sovereign Pocket Exascale AI · Standalone Build</p></body></html>`);
+  } catch (err) {
+    console.error('HTML build export error:', err);
+    return res.status(500).json({ error: 'HTML_BUILD_ERROR' });
+  }
+});
+
 // Endpoint: Z-GHOST Emergency Kill-Switch PIN 9999
 app.post('/api/ghost/kill', (req: Request, res: Response) => {
   const { pin } = req.body;

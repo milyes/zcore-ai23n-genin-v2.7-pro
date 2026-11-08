@@ -2,5 +2,7 @@
   "name": "Z-CORE AI23N GENIN v2.7 PRO",
   "description": "Sovereign Pocket Exascale AI with Tactical Inference: 22 clinical models, 580-byte binary, Z-GHOST Anti-Forensic 30s auto-wipe & PIN 9999, Z-SYNC-P2P BLE mesh, and Z-LEARN on-device INT2 federated learning.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

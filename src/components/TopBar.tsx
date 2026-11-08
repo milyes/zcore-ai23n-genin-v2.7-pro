@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, Zap, Skull, Radio, Cpu } from 'lucide-react';
+import { Download, Zap, Play, FileCode } from 'lucide-react';
 
 export type AppTab =
   | 'inference'
@@ -16,6 +16,8 @@ interface TopBarProps {
   setActiveTab: (tab: AppTab) => void;
   onOpenBoost: () => void;
   onDownloadBinary: () => void;
+  onLancerAI23N: () => void;
+  onBuildHtml: () => void;
   boostActive: boolean;
   faradayActive: boolean;
   usbPlugged: boolean;
@@ -26,30 +28,32 @@ export const TopBar: React.FC<TopBarProps> = ({
   setActiveTab,
   onOpenBoost,
   onDownloadBinary,
+  onLancerAI23N,
+  onBuildHtml,
   boostActive,
   faradayActive,
   usbPlugged,
 }) => {
   return (
-    <header className="border-b border-slate-800 bg-slate-950/95 backdrop-blur-md sticky top-0 z-40 px-6 py-3">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-6">
+    <header className="border-b border-slate-800 bg-slate-950/95 backdrop-blur-md sticky top-0 z-40 px-4 lg:px-6 py-2.5">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         {/* Zone 1: Brand Wordmark (Single text element) */}
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setActiveTab('inference')}
             className="text-left group cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 flex items-center gap-1.5"
           >
-            <span className="text-base font-bold tracking-tight text-white group-hover:text-cyan-400 transition-colors whitespace-nowrap">
+            <span className="text-sm md:text-base font-bold tracking-tight text-white group-hover:text-cyan-400 transition-colors whitespace-nowrap">
               Z-CORE AI23N GENIN
             </span>
-            <span className="text-xs font-mono text-cyan-400 bg-cyan-950/60 border border-cyan-800/80 px-1.5 py-0.2 rounded">
+            <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/60 border border-cyan-800/80 px-1.5 py-0.5 rounded">
               v2.7 PRO
             </span>
           </button>
         </div>
 
         {/* Zone 2: Navigation Links (single-line, clean unboxed typography) */}
-        <nav className="hidden xl:flex items-center gap-5 text-xs font-medium text-slate-400">
+        <nav className="hidden 2xl:flex items-center gap-4 text-xs font-medium text-slate-400">
           <button
             onClick={() => setActiveTab('inference')}
             className={`transition-colors whitespace-nowrap cursor-pointer py-1 ${
@@ -140,13 +144,13 @@ export const TopBar: React.FC<TopBarProps> = ({
           </button>
         </nav>
 
-        {/* Zone 3: Actions & Mobile Quick Menu */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          {/* Responsive tab selector on medium screens */}
+        {/* Zone 3: Direct Action Buttons (LANCER AI23N, EXPORT BIN, BUILD HTML) */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Responsive tab selector on small/medium screens */}
           <select
             value={activeTab}
             onChange={(e) => setActiveTab(e.target.value as AppTab)}
-            className="xl:hidden bg-slate-900 border border-slate-800 text-xs text-slate-200 rounded px-2 py-1 font-mono cursor-pointer"
+            className="2xl:hidden bg-slate-900 border border-slate-800 text-xs text-slate-200 rounded px-2 py-1 font-mono cursor-pointer"
           >
             <option value="inference">Clinical Inference</option>
             <option value="models">22 Models</option>
@@ -158,25 +162,49 @@ export const TopBar: React.FC<TopBarProps> = ({
             <option value="audit">Audit Vault</option>
           </select>
 
+          {/* Bouton 1: LANCER AI23N */}
           <button
-            onClick={onOpenBoost}
-            className={`px-2.5 py-1.5 text-xs font-mono rounded border transition-colors flex items-center gap-1.5 cursor-pointer ${
-              boostActive
-                ? 'bg-amber-500/10 border-amber-500 text-amber-300'
-                : 'border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white bg-slate-900'
-            }`}
-            title="Online Boost @45W: Requires PIN 2300 + explicit consent"
+            onClick={onLancerAI23N}
+            className="px-3 py-1.5 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded transition-colors whitespace-nowrap flex items-center gap-1.5 font-mono cursor-pointer shadow-sm"
+            title="Lancer l'inférence tactique IA23N en 0.03s"
           >
-            <Zap className={`w-3.5 h-3.5 ${boostActive ? 'text-amber-400' : 'text-slate-400'}`} />
-            <span className="whitespace-nowrap">{boostActive ? '45W Boost' : 'Boost @45W'}</span>
+            <Play className="w-3.5 h-3.5 fill-current" />
+            <span>LANCER AI23N</span>
           </button>
 
+          {/* Bouton 2: EXPORT BIN */}
           <button
             onClick={onDownloadBinary}
-            className="px-3 py-1.5 text-xs font-medium text-slate-950 bg-cyan-400 hover:bg-cyan-300 rounded transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 font-mono cursor-pointer"
+            className="px-3 py-1.5 text-xs font-semibold text-slate-950 bg-cyan-400 hover:bg-cyan-300 rounded transition-colors whitespace-nowrap flex items-center gap-1.5 font-mono cursor-pointer shadow-sm"
+            title="Exporter le binaire statique zcore-ai23n-genin-v2.7-pro.bin (580B)"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Export .bin (580B)</span>
+            <span>EXPORT BIN (580B)</span>
+          </button>
+
+          {/* Bouton 3: BUILD HTML */}
+          <button
+            onClick={onBuildHtml}
+            className="px-3 py-1.5 text-xs font-mono font-medium text-slate-200 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer"
+            title="Générer et télécharger l'application HTML autonome 100% offline"
+          >
+            <FileCode className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">BUILD HTML</span>
+            <span className="sm:hidden">HTML</span>
+          </button>
+
+          {/* Boost 45W button */}
+          <button
+            onClick={onOpenBoost}
+            className={`px-2 py-1.5 text-xs font-mono rounded border transition-colors flex items-center gap-1 cursor-pointer ${
+              boostActive
+                ? 'bg-amber-500/10 border-amber-500 text-amber-300'
+                : 'border-slate-800 text-slate-400 hover:text-white bg-slate-900/60'
+            }`}
+            title="Online Boost @45W: Requiert PIN 2300"
+          >
+            <Zap className={`w-3.5 h-3.5 ${boostActive ? 'text-amber-400' : 'text-slate-400'}`} />
+            <span className="hidden md:inline">{boostActive ? '45W' : 'Boost'}</span>
           </button>
         </div>
       </div>

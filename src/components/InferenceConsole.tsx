@@ -21,6 +21,8 @@ interface InferenceConsoleProps {
   onOpenBoost: () => void;
   boostActive: boolean;
   latestResult: TacticalInferenceResult | null;
+  onDownloadBinary?: () => void;
+  onBuildHtml?: () => void;
 }
 
 export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
@@ -28,6 +30,8 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
   onOpenBoost,
   boostActive,
   latestResult,
+  onDownloadBinary,
+  onBuildHtml,
 }) => {
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>(SCENARIO_PRESETS[0].id);
   const [vitals, setVitals] = useState<ClinicalVitals>({ ...SCENARIO_PRESETS[0].vitals });
@@ -383,24 +387,45 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
               </label>
             </div>
 
-            {/* Execute Trigger */}
+            {/* Execute Trigger: LANCER AI23N */}
             <button
               onClick={handleRunInference}
               disabled={isInferring}
-              className="w-full py-2.5 px-4 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-semibold text-xs tracking-wider uppercase font-mono rounded transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
+              className="w-full py-2.5 px-4 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs tracking-wider uppercase font-mono rounded transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
             >
               {isInferring ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>EXECUTING 22 MODELS...</span>
+                  <span>EXÉCUTION 22 MODÈLES...</span>
                 </>
               ) : (
                 <>
                   <Activity className="w-4 h-4" />
-                  <span>RUN TACTICAL INFERENCE (0.03s)</span>
+                  <span>LANCER AI23N (0.03s INFERENCE)</span>
                 </>
               )}
             </button>
+
+            {/* Quick Action Row: Export BIN & Build HTML */}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={onDownloadBinary}
+                className="py-2 px-3 bg-cyan-400/10 hover:bg-cyan-400/20 border border-cyan-500/40 text-cyan-300 font-semibold text-xs font-mono rounded transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                title="Exporter le binaire statique 580 bytes"
+              >
+                <span>EXPORT BIN (580B)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onBuildHtml}
+                className="py-2 px-3 bg-slate-950 hover:bg-slate-900 border border-slate-700 text-slate-300 font-semibold text-xs font-mono rounded transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                title="Générer l'application standalone HTML 100% offline"
+              >
+                <span>BUILD HTML</span>
+              </button>
+            </div>
           </div>
         </div>
 

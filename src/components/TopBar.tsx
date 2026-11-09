@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, Zap, Play, FileCode, Globe } from 'lucide-react';
+import { Download, Zap, Play, FileCode, Code2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 export type AppTab =
@@ -19,6 +19,7 @@ interface TopBarProps {
   onDownloadBinary: () => void;
   onLancerAI23N: () => void;
   onBuildHtml: () => void;
+  onDownloadBinHtml?: () => void;
   boostActive: boolean;
   faradayActive: boolean;
   usbPlugged: boolean;
@@ -31,6 +32,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onDownloadBinary,
   onLancerAI23N,
   onBuildHtml,
+  onDownloadBinHtml,
   boostActive,
   faradayActive,
   usbPlugged,
@@ -225,6 +227,18 @@ export const TopBar: React.FC<TopBarProps> = ({
             <span className="hidden sm:inline">{t.actions.buildHtml}</span>
             <span className="sm:hidden">HTML</span>
           </button>
+
+          {/* Bouton 4: BIN_HTML (Polyglot self-extracting .bin.html) */}
+          {onDownloadBinHtml && (
+            <button
+              onClick={onDownloadBinHtml}
+              className="px-2.5 md:px-3 py-1.5 text-xs font-mono font-bold text-cyan-300 bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-600/70 rounded transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer shadow-sm"
+              title="Télécharger le fichier polyglote BIN_HTML (binaire 580B + interface autonome)"
+            >
+              <Code2 className="w-3.5 h-3.5 text-cyan-400" />
+              <span>{t.actions.binHtml}</span>
+            </button>
+          )}
 
           {/* Boost 45W button */}
           <button

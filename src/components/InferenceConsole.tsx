@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   Check,
   Clock,
+  Code2,
   Copy,
   FileText,
   Flame,
@@ -24,6 +25,7 @@ interface InferenceConsoleProps {
   latestResult: TacticalInferenceResult | null;
   onDownloadBinary?: () => void;
   onBuildHtml?: () => void;
+  onDownloadBinHtml?: () => void;
 }
 
 export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
@@ -33,6 +35,7 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
   latestResult,
   onDownloadBinary,
   onBuildHtml,
+  onDownloadBinHtml,
 }) => {
   const { language, t } = useLanguage();
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>(SCENARIO_PRESETS[0].id);
@@ -633,15 +636,28 @@ export const InferenceConsole: React.FC<InferenceConsoleProps> = ({
                 </div>
               </div>
 
-              {/* Action Buttons: Export PDF / 45W Boost */}
+              {/* Action Buttons: Export PDF / BIN_HTML / 45W Boost */}
               <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                <button
-                  onClick={handleExportPdf}
-                  className="px-3.5 py-2 text-xs font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 rounded transition-colors flex items-center gap-1.5 cursor-pointer font-mono"
-                >
-                  <FileText className="w-3.5 h-3.5 text-slate-300" />
-                  <span>{t.results.generatePdf}</span>
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={handleExportPdf}
+                    className="px-3.5 py-2 text-xs font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 rounded transition-colors flex items-center gap-1.5 cursor-pointer font-mono"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-slate-300" />
+                    <span>{t.results.generatePdf}</span>
+                  </button>
+
+                  {onDownloadBinHtml && (
+                    <button
+                      onClick={onDownloadBinHtml}
+                      className="px-3 py-2 text-xs font-mono font-bold text-cyan-300 bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-600/70 rounded transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+                      title="Télécharger le fichier polyglote BIN_HTML (binaire 580B + interface autonome)"
+                    >
+                      <Code2 className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>{t.actions.binHtml}</span>
+                    </button>
+                  )}
+                </div>
 
                 <button
                   onClick={onOpenBoost}

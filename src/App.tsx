@@ -12,7 +12,7 @@ import { OnlineBoostModal } from './components/OnlineBoostModal';
 import { TacticalInferenceResult } from './types/zcore';
 import { SCENARIO_PRESETS } from './data/scenarios';
 import { executeTacticalInference } from './utils/cryptoAudit';
-import { generateStandaloneHtml } from './utils/exportHtml';
+import { generateStandaloneHtml, generateBinHtml } from './utils/exportHtml';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { CheckCircle2 } from 'lucide-react';
 
@@ -158,9 +158,38 @@ function AppContent() {
     }
   };
 
+  // 4. Action: BIN_HTML (Fichier polyglote auto-extractible .bin.html avec binaire 580B natif)
+  const handleDownloadBinHtml = () => {
+    try {
+      const anchor = document.createElement('a');
+      anchor.href = '/api/binary/bin-html';
+      anchor.download = 'zcore-ai23n-genin-v2.7-pro.bin.html';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      showNotification(
+        language === 'FR'
+          ? 'BIN_HTML TÉLÉCHARGÉ : zcore-ai23n-genin-v2.7-pro.bin.html (Polyglote 580B)'
+          : 'BIN_HTML DOWNLOADED: zcore-ai23n-genin-v2.7-pro.bin.html (580B Polyglot)'
+      );
+    } catch {
+      const htmlContent = generateBinHtml(language);
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'zcore-ai23n-genin-v2.7-pro.bin.html';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showNotification('BIN_HTML TÉLÉCHARGÉ (Fallback Blob)');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* Top Bar (Strict 3-zone contract with FR | EN switcher, LANCER AI23N, EXPORT BIN, and BUILD HTML) */}
+      {/* Top Bar (Strict 3-zone contract with FR | EN switcher, LANCER AI23N, EXPORT BIN, BUILD HTML, and BIN_HTML) */}
       <TopBar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -168,6 +197,7 @@ function AppContent() {
         onDownloadBinary={handleDownloadBinary}
         onLancerAI23N={handleLancerAI23N}
         onBuildHtml={handleBuildHtml}
+        onDownloadBinHtml={handleDownloadBinHtml}
         boostActive={boostActive}
         faradayActive={faradayActive}
         usbPlugged={usbPlugged}
@@ -199,6 +229,7 @@ function AppContent() {
             latestResult={latestResult}
             onDownloadBinary={handleDownloadBinary}
             onBuildHtml={handleBuildHtml}
+            onDownloadBinHtml={handleDownloadBinHtml}
           />
         )}
 
@@ -230,6 +261,7 @@ function AppContent() {
             onDownloadBinary={handleDownloadBinary}
             onLancerAI23N={handleLancerAI23N}
             onBuildHtml={handleBuildHtml}
+            onDownloadBinHtml={handleDownloadBinHtml}
           />
         )}
 

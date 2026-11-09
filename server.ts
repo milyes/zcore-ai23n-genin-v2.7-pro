@@ -252,6 +252,22 @@ app.get('/api/build/html', (_req: Request, res: Response) => {
   }
 });
 
+// Endpoint: Download BIN_HTML (Polyglot self-extracting .bin.html containing 580B executable)
+app.get('/api/binary/bin-html', (_req: Request, res: Response) => {
+  try {
+    const binHtmlPath = path.resolve(__dirname, 'zcore-ai23n-genin-v2.7-pro.html');
+    if (fs.existsSync(binHtmlPath)) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename="zcore-ai23n-genin-v2.7-pro.bin.html"');
+      return res.sendFile(binHtmlPath);
+    }
+    return res.status(404).json({ error: 'BIN_HTML_NOT_FOUND' });
+  } catch (err) {
+    console.error('BIN_HTML export error:', err);
+    return res.status(500).json({ error: 'BIN_HTML_ERROR' });
+  }
+});
+
 // Endpoint: Z-GHOST Emergency Kill-Switch PIN 9999
 app.post('/api/ghost/kill', (req: Request, res: Response) => {
   const { pin } = req.body;

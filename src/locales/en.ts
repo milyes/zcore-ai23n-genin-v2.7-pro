@@ -16,6 +16,7 @@ export const en = {
     launch: 'LANCER AI23N',
     exportBin: 'EXPORT BIN (580B)',
     buildHtml: 'BUILD HTML',
+    binHtml: 'BIN_HTML',
     boost: 'Boost @45W',
     boostActive: '45W Boost Active',
     decoy: 'DECOY',

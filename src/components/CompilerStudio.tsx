@@ -5,12 +5,14 @@ interface CompilerStudioProps {
   onDownloadBinary: () => void;
   onLancerAI23N?: () => void;
   onBuildHtml?: () => void;
+  onDownloadBinHtml?: () => void;
 }
 
 export const CompilerStudio: React.FC<CompilerStudioProps> = ({
   onDownloadBinary,
   onLancerAI23N,
   onBuildHtml,
+  onDownloadBinHtml,
 }) => {
   const [quantizeInt4, setQuantizeInt4] = useState<boolean>(true);
   const [prune80, setPrune80] = useState<boolean>(true);
@@ -127,6 +129,17 @@ exit_sequence:
               title="Générer l'application HTML standalone 100% offline"
             >
               <span>BUILD HTML</span>
+            </button>
+          )}
+
+          {onDownloadBinHtml && (
+            <button
+              onClick={onDownloadBinHtml}
+              className="px-3.5 py-2 bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-500/70 text-cyan-300 font-bold text-xs font-mono rounded transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+              title="Télécharger le fichier polyglote BIN_HTML (binaire 580B + HTML auto-extractible)"
+            >
+              <Code2 className="w-3.5 h-3.5 text-cyan-400" />
+              <span>BIN_HTML</span>
             </button>
           )}
         </div>
